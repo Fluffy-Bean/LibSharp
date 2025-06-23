@@ -9,7 +9,7 @@ uint8_t mirror_bytes(uint8_t byte)
 {
     uint8_t res = 0;
 
-    for (uint8_t x=0; x < 8; ++x) {
+    for (uint8_t x = 0; x < 8; x += 1) {
         res = (res << 1) | (byte & 1);
         byte >>= 1;
     }
