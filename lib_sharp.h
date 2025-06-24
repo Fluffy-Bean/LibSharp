@@ -10,8 +10,10 @@
 
 typedef enum sharp_color
 {
-    WHITE = 0,
-    BLACK = 1,
+    WHITE,
+    LIGHT_GRAY,
+    DARK_GRAY,
+    BLACK,
 }
 sharp_color_t;
 
@@ -27,10 +29,14 @@ sharp_display_t;
 
 sharp_display_t sharp_display_new(uint16_t width, uint16_t height, spi_inst_t * spi, uint8_t cs);
 bool sharp_display_error(sharp_display_t * display);
+
 void sharp_display_refresh_screen(sharp_display_t * display);
 void sharp_display_clear_screen(sharp_display_t * display);
 void sharp_display_toggle_vcom(sharp_display_t * display);
-void sharp_display_draw_pixel(sharp_display_t *display, uint16_t x, uint16_t y, sharp_color_t color);
-void sharp_display_fill_screen(sharp_display_t * display, sharp_color_t color);
+
+void sharp_display_set_buffer(sharp_display_t * display, sharp_color_t color);
+
+void sharp_display_draw_pixel(sharp_display_t * display, uint16_t x, uint16_t y, sharp_color_t color);
+void sharp_display_draw_filled_rectangle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 
 #endif
