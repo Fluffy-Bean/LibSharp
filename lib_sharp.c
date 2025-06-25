@@ -29,6 +29,13 @@ uint16_t min_uint16(uint16_t a, uint16_t b)
     return a < b ? a : b;
 }
 
+void swap_int16(int16_t *a, int16_t *b)
+{
+    int16_t t = *a;
+    *a = *b;
+    *b = t;
+}
+
 sharp_display_t sharp_display_new(uint16_t width, uint16_t height, spi_inst_t * spi, uint8_t cs)
 {
     gpio_put(cs, false);
@@ -143,7 +150,7 @@ void sharp_display_draw_pixel(sharp_display_t * display, uint16_t x, uint16_t y,
 
     switch (color) {
     case WHITE:
-        display->framebuffer[row + col] |= ~mask;
+        display->framebuffer[row + col] |= mask;
         break;
     case LIGHT_GRAY:
         if (x % 3 || y % 3)
@@ -169,6 +176,100 @@ void sharp_display_draw_pixel(sharp_display_t * display, uint16_t x, uint16_t y,
         display->framebuffer[row + col] &= ~mask;
         break;
     }
+}
+
+void sharp_display_draw_line(sharp_display_t * display, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+{
+    // Vertical
+    if (x0 == x1)
+    {
+        if (y0 > y1)
+        {
+            swap_int16(&y0, &y1);
+        }
+
+        for (; y0 < y1; y0 += 1)
+        {
+            sharp_display_draw_pixel(display, x0, y0, color);
+        }
+
+        return;
+    }
+
+    // Horizontal
+    if (y0 == y1)
+    {
+        if (x0 > x1)
+        {
+            swap_int16(&x0, &x1);
+        }
+
+        for (; x0 < x1; x0 += 1)
+        {
+            sharp_display_draw_pixel(display, x0, y0, color);
+        }
+
+        return;
+    }
+
+    // Bresenham
+    int16_t dx = x1 - x0;
+    if (dx < 0)
+    {
+        dx = -dx;
+    }
+
+    int16_t dy = y1 - y0;
+    if (dy < 0)
+    {
+        dy = -dy;
+    }
+
+    int16_t steep = dy > dx;
+    if (steep) {
+        swap_int16(&x0, &y0);
+        swap_int16(&x1, &y1);
+    }
+    if (x0 > x1) {
+        swap_int16(&x0, &x1);
+        swap_int16(&y0, &y1);
+    }
+
+    dx = x1 - x0;
+    dy = y1 - y0;
+
+    int16_t ystep = 1;
+    if (dy < 0) {
+        dy = -dy;
+        ystep = -1;
+    }
+
+    int16_t err = dx / 2;
+    for (; x0 <= x1; x0 += 1) {
+        if (steep) {
+            sharp_display_draw_pixel(display, y0, x0, color);
+        } else {
+            sharp_display_draw_pixel(display, x0, y0, color);
+        }
+
+        err -= dy;
+
+        if (err < 0) {
+            y0 += ystep;
+            err += dx;
+        }
+    }
+}
+
+void sharp_display_draw_rectangle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+{
+    w = min_uint16(w, display->width);
+    h = min_uint16(h, display->height);
+
+    sharp_display_draw_line(display, x, y, x + w, y, color);         // Top
+    sharp_display_draw_line(display, x, y + h, x + w, y + h, color); // Bottom
+    sharp_display_draw_line(display, x, y, x, y + h, color);         // Left
+    sharp_display_draw_line(display, x + w, y, x + w, y + h, color); // Right
 }
 
 void sharp_display_draw_filled_rectangle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)

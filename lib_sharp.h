@@ -3,7 +3,7 @@
 
 #include "hardware/spi.h"
 
-// in LSB format
+// LSB format
 #define CMD_WRITE 0b10000000
 #define CMD_VCOM  0b01000000
 #define CMD_CLEAR 0b00100000
@@ -37,6 +37,8 @@ void sharp_display_toggle_vcom(sharp_display_t * display);
 void sharp_display_set_buffer(sharp_display_t * display, sharp_color_t color);
 
 void sharp_display_draw_pixel(sharp_display_t * display, uint16_t x, uint16_t y, sharp_color_t color);
+void sharp_display_draw_line(sharp_display_t * display, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
+void sharp_display_draw_rectangle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 void sharp_display_draw_filled_rectangle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
 
 #endif
