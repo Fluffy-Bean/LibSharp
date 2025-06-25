@@ -277,11 +277,165 @@ void sharp_display_draw_filled_rectangle(sharp_display_t * display, uint16_t x, 
     w = min_uint16(w, display->width);
     h = min_uint16(h, display->height);
 
-    for (uint16_t i = 0; i < h; i += 1)
+    for (; y < h; y += 1)
     {
-        for (uint16_t j = 0; j < w; j += 1)
+        sharp_display_draw_line(display, x, y, x + w, y, color);
+    }
+}
+
+void sharp_display_draw_circle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t r, uint16_t color)
+{
+    int16_t f = 1 - r;
+    int16_t ddfx = 1;
+    int16_t ddfy = -2 * r;
+    int16_t x0 = 0;
+    int16_t y0 = r;
+
+    sharp_display_draw_pixel(display, x, y + r, color);
+    sharp_display_draw_pixel(display, x, y - r, color);
+    sharp_display_draw_pixel(display, x + r, y, color);
+    sharp_display_draw_pixel(display, x - r, y, color);
+
+    while (x0 < y0)
+    {
+        if (f >= 0)
         {
-            sharp_display_draw_pixel(display, x + j, y + i, color);
+            y0 -= 1;
+            ddfy += 2;
+            f += ddfy;
         }
+
+        x0 += 1;
+        ddfx += 2;
+        f += ddfx;
+
+        sharp_display_draw_pixel(display, x + x0, y + y0, color);
+        sharp_display_draw_pixel(display, x - x0, y + y0, color);
+        sharp_display_draw_pixel(display, x + x0, y - y0, color);
+        sharp_display_draw_pixel(display, x - x0, y - y0, color);
+        sharp_display_draw_pixel(display, x + y0, y + x0, color);
+        sharp_display_draw_pixel(display, x - y0, y + x0, color);
+        sharp_display_draw_pixel(display, x + y0, y - x0, color);
+        sharp_display_draw_pixel(display, x - y0, y - x0, color);
+    }
+}
+
+void sharp_display_draw_filled_circle(sharp_display_t * display, uint16_t x, uint16_t y, uint16_t r, uint16_t color)
+{
+    int16_t f = 1 - r;
+    int16_t ddfx = 1;
+    int16_t ddfy = -2 * r;
+    int16_t x0 = 0;
+    int16_t y0 = r;
+
+    sharp_display_draw_line(display, x, y - r, x, y + r, color);
+
+    while (x0 < y0)
+    {
+        if (f >= 0)
+        {
+            y0 -= 1;
+            ddfy += 2;
+            f += ddfy;
+        }
+
+        x0 += 1;
+        ddfx += 2;
+        f += ddfx;
+
+        sharp_display_draw_line(display, x + x0, y - y0, x + x0, y + y0, color);
+        sharp_display_draw_line(display, x + y0, y - x0, x + y0, y + x0, color);
+        sharp_display_draw_line(display, x - x0, y - y0, x - x0, y + y0, color);
+        sharp_display_draw_line(display, x - y0, y - x0, x - y0, y + x0, color);
+    }
+}
+
+void sharp_display_draw_triangle(sharp_display_t * display, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
+{
+    sharp_display_draw_line(display, x0, y0, x1, y1, color);
+    sharp_display_draw_line(display, x1, y1, x2, y2, color);
+    sharp_display_draw_line(display, x2, y2, x0, y0, color);
+}
+
+void sharp_display_draw_filled_triangle(sharp_display_t * display, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
+{
+    if (y0 > y1) {
+        swap_int16(&y0, &y1);
+        swap_int16(&x0, &x1);
+    }
+    if (y1 > y2) {
+        swap_int16(&y2, &y1);
+        swap_int16(&x2, &x1);
+    }
+    if (y0 > y1) {
+        swap_int16(&y0, &y1);
+        swap_int16(&x0, &x1);
+    }
+
+    // Line
+    if (y0 == y2)
+    {
+        int16_t a = x0;
+        int16_t b = x0;
+
+        if (x1 < a)
+        {
+            a = x1;
+        } else if (x1 > b)
+        {
+            b = x1;
+        }
+
+        if (x2 < a)
+        {
+            a = x2;
+        } else if (x2 > b)
+        {
+            b = x2;
+        }
+
+        sharp_display_draw_line(display, a, y0, b, y0, color);
+
+        return;
+    }
+
+    int16_t dx01 = x1 - x0;
+    int16_t dy01 = y1 - y0;
+    int16_t dx02 = x2 - x0;
+    int16_t dy02 = y2 - y0;
+    int16_t dx12 = x2 - x1;
+    int16_t dy12 = y2 - y1;
+
+    int16_t sa = 0;
+    int16_t sb = 0;
+    int16_t a = 0;
+    int16_t b = 0;
+
+    int16_t last = y1 - 1;
+    if (y1 == y2)
+    {
+        last = y1;
+    }
+
+    int16_t y = y0;
+    for (; y <= last; y += 1) {
+        a = x0 + sa / dy01;
+        b = x0 + sb / dy02;
+        sa += dx01;
+        sb += dx02;
+
+        sharp_display_draw_line(display, a, y, b, y, color);
+    }
+
+    sa = dx12 * (y - y1);
+    sb = dx02 * (y - y0);
+
+    for (; y <= y2; y += 1) {
+        a = x1 + sa / dy12;
+        b = x0 + sb / dy02;
+        sa += dx12;
+        sb += dx02;
+
+        sharp_display_draw_line(display, a, y, b, y, color);
     }
 }
